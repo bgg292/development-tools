@@ -1,0 +1,55 @@
+name: Guard - block dangerous file changes
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Block changes to workflows/agent
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+
+          echo "Diffing files between $BASE and $HEAD"
+          CHANGED="$(git diff --name-only "$BASE" "$HEAD")"
+          echo "$CHANGED"
+
+          # Files/directories that must NEVER be changed by AI PRs (or any PR unless you intend it)
+          BLOCK_PATTERNS=(
+            "^\\.github/workflows/"
+            "^tools/agent/"
+            "^\\.env"
+            "^\\.npmrc"
+            "^package-lock\\.json$"  # optional: remove if you want lockfile updates
+          )
+
+          BLOCKED=0
+          while IFS= read -r file; do
+            for pat in "${BLOCK_PATTERNS[@]}"; do
+              if [[ "$file" =~ $pat ]]; then
+                echo "::error file=$file::Blocked change detected ($pat). This PR may not modify protected files."
+                BLOCKED=1
+              fi
+            done
+          done <<< "$CHANGED"
+
+          if [[ "$BLOCKED" -eq 1 ]]; then
+            echo "Blocked changes found. Failing."
+            exit 1
+          fi
+
+          echo "Guard check passed: no blocked files modified."
+

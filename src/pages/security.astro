@@ -1,0 +1,26 @@
+---
+import ToolLayout from "../components/ToolLayout.astro";
+---
+
+<ToolLayout
+  title="Security"
+  description="Security notes and safe usage guidelines for these in-browser tools."
+>
+  <h2>Safe usage</h2>
+  <ul>
+    <li>Do not paste secrets (API keys, passwords, private tokens).</li>
+    <li>Prefer redacted logs and sanitized configs.</li>
+    <li>Some tools decode/format data only; they do not “secure” anything.</li>
+  </ul>
+
+  <h2>Network calls</h2>
+  <p>
+    Tools are intended to run client-side only. No server endpoints are used by default.
+  </p>
+
+  <h2>Reporting issues</h2>
+  <p>
+    If you find a bug or a security concern, open an issue in the GitHub repository.
+  </p>
+</ToolLayout>
+
