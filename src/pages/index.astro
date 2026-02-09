@@ -1,17 +1,65 @@
 ---
+import ToolLayout from "../components/ToolLayout.astro";
 
+const baseRaw = import.meta.env.BASE_URL;
+const base = baseRaw.endsWith("/") ? baseRaw : `${baseRaw}/`;
+const href = (path: string) => `${base}${String(path).replace(/^\//, "")}`;
+
+// Auto-discover tool pages in src/pages/tools/*.astro
+const toolModules = await Astro.glob("./tools/*.astro");
+
+const tools = toolModules
+  .map((m) => {
+    const slug = (m.file || "").split("/").pop()?.replace(/\.astro$/, "") || "";
+    return {
+      slug,
+      href: href(`tools/${slug}`),
+      title: (m as any).title ?? slug,
+      description: (m as any).description ?? "",
+    };
+  })
+  .filter((t) => t.slug && t.slug !== "index")
+  .sort((a, b) => a.title.localeCompare(b.title));
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<ToolLayout
+  title="Dev Utilities"
+  description="Privacy-first developer utilities that run locally in your browser. No tracking. No uploads."
+>
+  <section style="display:grid; gap: 12px; margin: 16px 0 24px;">
+    <p style="margin:0;">
+      Each tool runs <strong>fully in your browser</strong>. Nothing is sent to a server by this site.
+      <strong>Do not paste secrets</strong> (API keys, passwords).
+    </p>
+
+    <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+      <a href={href("privacy")} style="padding:8px 12px; border:1px solid #e5e7eb; border-radius:10px; text-decoration:none;">Privacy</a>
+      <a href={href("security")} style="padding:8px 12px; border:1px solid #e5e7eb; border-radius:10px; text-decoration:none;">Security</a>
+      <a href={href("tools")} style="padding:8px 12px; border:1px solid #e5e7eb; border-radius:10px; text-decoration:none;">All tools</a>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin-top:0;">Tools</h2>
+
+    {tools.length === 0 ? (
+      <p>No tools yet. Add pages under <code>src/pages/tools/</code>.</p>
+    ) : (
+      <ul style="list-style:none; padding:0; margin:0; display:grid; gap: 10px;">
+        {tools.map((t) => (
+          <li style="border:1px solid #e5e7eb; border-radius:14px; padding:12px;">
+            <a href={t.href} style="text-decoration:none; font-weight:700; display:inline-block; margin-bottom:6px;">
+              {t.title}
+            </a>
+            {t.description ? (
+              <div style="color:#4b5563;">{t.description}</div>
+            ) : (
+              <div style="color:#9ca3af;">No description yet.</div>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+</ToolLayout>
+

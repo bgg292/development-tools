@@ -1,5 +1,12 @@
 ---
 const { title, description } = Astro.props;
+
+// Normalize BASE_URL so it ALWAYS ends with "/"
+const baseRaw = import.meta.env.BASE_URL;
+const base = baseRaw.endsWith("/") ? baseRaw : `${baseRaw}/`;
+
+// Join safely: base + path-without-leading-slash
+const href = (path: string) => `${base}${String(path).replace(/^\//, "")}`;
 ---
 
 <html lang="en">
@@ -10,12 +17,8 @@ const { title, description } = Astro.props;
     <title>{title}</title>
     <meta name="description" content={description} />
 
-    <!-- Privacy-first / security messaging -->
     <meta name="robots" content="index,follow" />
 
-    <!-- CSP via meta tag (works on static hosting, but headers are stronger).
-         This blocks most outbound connections by default.
-         If you later add analytics, you'll need to update connect-src. -->
     <meta
       http-equiv="Content-Security-Policy"
       content="
@@ -34,10 +37,11 @@ const { title, description } = Astro.props;
 
   <body>
     <header class="wrap">
-      <a class="brand" href="/">Dev Utilities</a>
+      <a class="brand" href={base}>Dev Utilities</a>
       <nav class="nav">
-        <a href="/privacy">Privacy</a>
-        <a href="/security">Security</a>
+        <a href={href("privacy")}>Privacy</a>
+        <a href={href("security")}>Security</a>
+        <a href={href("tools")}>Tools</a>
       </nav>
     </header>
 
@@ -56,7 +60,7 @@ const { title, description } = Astro.props;
     <footer class="wrap footer">
       <small>
         No tracking • No cookies • Static site •
-        <a href="/privacy">Privacy</a> • <a href="/security">Security</a>
+        <a href={href("privacy")}>Privacy</a> • <a href={href("security")}>Security</a>
       </small>
     </footer>
 

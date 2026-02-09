@@ -1,36 +1,34 @@
 ---
 import ToolLayout from "../../components/ToolLayout.astro";
+
+export const title = "JSON Formatter";
+export const description = "Format and validate JSON locally in your browser.";
+
+// BASE_URL-safe link to the public JS file
+const baseRaw = import.meta.env.BASE_URL;
+const base = baseRaw.endsWith("/") ? baseRaw : `${baseRaw}/`;
+const asset = (path: string) => `${base}${String(path).replace(/^\//, "")}`;
 ---
 
-<ToolLayout title="JSON Formatter" description="Format and validate JSON locally in your browser.">
-  <textarea id="in" rows="10" style="width:100%;" placeholder='{"hello":"world"}'></textarea>
-  <div style="margin: 10px 0;">
-    <button id="btn">Format</button>
-    <button id="copy" disabled>Copy output</button>
+<ToolLayout title={title} description={description}>
+  <textarea
+    id="json-in"
+    rows="10"
+    style="width:100%;"
+    placeholder='{"hello":"world"}'
+  ></textarea>
+
+  <div style="margin: 10px 0; display:flex; gap:10px; flex-wrap:wrap;">
+    <button id="json-format" type="button">Format</button>
+    <button id="json-copy" type="button" disabled>Copy output</button>
   </div>
-  <pre id="out" style="white-space:pre-wrap; padding:12px; border:1px solid #e5e7eb; border-radius:10px;"></pre>
 
-  <script type="module">
-    const $in = document.getElementById("in");
-    const $out = document.getElementById("out");
-    const $copy = document.getElementById("copy");
+  <pre
+    id="json-out"
+    style="white-space:pre-wrap; padding:12px; border:1px solid #e5e7eb; border-radius:10px;"
+  ></pre>
 
-    document.getElementById("btn").addEventListener("click", () => {
-      try {
-        const obj = JSON.parse($in.value);
-        $out.textContent = JSON.stringify(obj, null, 2);
-        $copy.disabled = false;
-      } catch (e) {
-        $out.textContent = "Invalid JSON: " + e.message;
-        $copy.disabled = true;
-      }
-    });
-
-    $copy.addEventListener("click", async () => {
-      await navigator.clipboard.writeText($out.textContent);
-      $copy.textContent = "Copied!";
-      setTimeout(() => ($copy.textContent = "Copy output"), 1200);
-    });
-  </script>
+  <!-- External module/script (allowed by CSP script-src 'self') -->
+  <script src={asset("js/json-formatter.js")}></script>
 </ToolLayout>
 
