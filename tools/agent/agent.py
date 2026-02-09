@@ -15,17 +15,12 @@ def write(path: Path, content: str):
     path.write_text(content, encoding="utf-8")
 
 def safe_slug(s: str) -> str:
-    s = s.strip().lower()
+    s = (s or "").strip().lower()
     s = re.sub(r"[^a-z0-9-]+", "-", s)
     s = re.sub(r"-{2,}", "-", s).strip("-")
     return s or "tool"
 
-def main():
-    api_key = os.environ["OPENAI_API_KEY"]
-    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    client = OpenAI(api_key=api_key)
-
-    # 1) Ask AI for a new tool spec
+def get_json_spec(client: OpenAI, model: str) -> dict:
     instructions = (
         "Propose ONE new in-browser developer utility tool.\n"
         "Constraints:\n"
@@ -35,20 +30,47 @@ def main():
         "- Provide JSON with: slug, title, description, placeholder_ui, behavior_notes.\n"
         "Return JSON only."
     )
+
+    # IMPORTANT: The Responses API requires the *input* to contain the word 'json'
+    user_input = (
+        "Return a single JSON object only.\n"
+        "Choose something useful not already in the repo. Avoid anything security-offensive.\n"
+        "Keep it simple and deterministic."
+    )
+
     resp = client.responses.create(
         model=model,
         instructions=instructions,
-        input="Choose something useful not already in the repo. Avoid anything security-offensive. Keep it simple.",
+        input=user_input,
         text={"format": {"type": "json_object"}},
         temperature=0.2,
     )
-    spec = json.loads(resp.output_text)
+
+    try:
+        return json.loads(resp.output_text)
+    except Exception:
+        # One retry with an even stricter reminder
+        resp2 = client.responses.create(
+            model=model,
+            instructions=instructions,
+            input=user_input + "\n\nJSON ONLY. No prose, no markdown, no code fences.",
+            text={"format": {"type": "json_object"}},
+            temperature=0.2,
+        )
+        return json.loads(resp2.output_text)
+
+def main():
+    api_key = os.environ["OPENAI_API_KEY"]
+    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    client = OpenAI(api_key=api_key)
+
+    spec = get_json_spec(client, model)
 
     slug = safe_slug(spec.get("slug", "")) or safe_slug(spec.get("title", "tool"))
     title = str(spec.get("title", slug))
     description = str(spec.get("description", "In-browser developer utility (privacy-first)."))
 
-    # Prevent collisions if tool already exists
+    # Prevent collisions
     tool_page = ROOT / f"src/pages/tools/{slug}.astro"
     if tool_page.exists():
         slug = f"{slug}-{datetime.date.today().isoformat()}"
@@ -56,7 +78,7 @@ def main():
     branch = f"ai/{slug}-{datetime.date.today().isoformat()}"
     git("checkout", "-b", branch)
 
-    # 2) Generate external JS for the tool (CSP-safe: no inline scripts)
+    # Generate external JS (CSP-safe: no inline scripts)
     js_prompt = (
         "Write a small, plain JavaScript file that wires up the tool UI.\n"
         "Rules:\n"
@@ -71,6 +93,7 @@ def main():
         f"Tool placeholder UI: {spec.get('placeholder_ui','')}\n"
         "Output ONLY JavaScript, no code fences."
     )
+
     js_resp = client.responses.create(
         model=model,
         instructions="You write safe browser JS for simple developer utilities.",
@@ -79,7 +102,6 @@ def main():
     )
     js_code = (js_resp.output_text or "").replace("```", "").strip()
 
-    # 3) Tool page references external JS in /public/js/
     page = f"""---
 import ToolLayout from "../../components/ToolLayout.astro";
 
@@ -106,7 +128,6 @@ const asset = (path) => `${{base}}${{String(path).replace(/^\\//, "")}}`;
 </ToolLayout>
 """
 
-    # Optional TS placeholder (for future refactor)
     tool_ts = f"""// Auto-generated tool module placeholder: {title}
 // You can later refactor the public/js/{slug}.js logic into reusable TS here.
 
@@ -119,7 +140,7 @@ export function run(input: string): string {{
     write(ROOT / f"public/js/{slug}.js", js_code)
     write(ROOT / f"src/tools/{slug}.ts", tool_ts)
 
-    # 4) Build check
+    # Build check
     sh(["npm", "ci"])
     sh(["npm", "run", "build"])
 
@@ -127,7 +148,6 @@ export function run(input: string): string {{
     git("commit", "-m", f"Add tool: {title}")
     git("push", "-u", "origin", branch)
 
-    # 5) Open PR via GitHub CLI
     sh([
         "gh", "pr", "create",
         "--title", f"Add tool: {title}",
