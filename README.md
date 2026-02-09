@@ -141,4 +141,4 @@ This repository exists to answer questions like:
 ---
 
 **In short:**  
-This is a **secure, human-supervised AI development experiment** that happens to produce useful, privacy-first developer tools along the way.
+This is intended to be a **secure, human-supervised AI development experiment** that happens to produce useful, privacy-first developer tools along the way.
