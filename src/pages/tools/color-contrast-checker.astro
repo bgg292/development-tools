@@ -1,0 +1,24 @@
+---
+import ToolLayout from "../../components/ToolLayout.astro";
+
+export const title = "Color Contrast Checker";
+export const description = "A simple tool to evaluate the contrast ratio between two colors to ensure accessibility compliance. Users can input hex color codes or use a color picker to select colors directly from the webpage.";
+
+// BASE_URL-safe asset helper
+const baseRaw = import.meta.env.BASE_URL;
+const base = baseRaw.endsWith("/") ? baseRaw : `${baseRaw}/`;
+const asset = (path) => `${base}${String(path).replace(/^\//, "")}`;
+---
+
+<ToolLayout title={title} description={description}>
+  <textarea id="tool-in" rows="10" style="width:100%;" placeholder="Paste input here…"></textarea>
+
+  <div style="margin: 10px 0; display:flex; gap:10px; flex-wrap:wrap;">
+    <button id="tool-run" type="button">Run</button>
+    <button id="tool-copy" type="button" disabled>Copy output</button>
+  </div>
+
+  <pre id="tool-out" style="white-space:pre-wrap; padding:12px; border:1px solid #e5e7eb; border-radius:10px;"></pre>
+
+  <script src={asset("js/color-contrast-checker.js")}></script>
+</ToolLayout>
