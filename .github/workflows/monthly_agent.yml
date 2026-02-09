@@ -13,13 +13,18 @@ jobs:
   propose_and_pr:
     runs-on: ubuntu-latest
     env:
-      # GH CLI uses this automatically in GitHub Actions
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true
+
+      - name: Configure git author (required for commits)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - uses: actions/setup-node@v4
         with:

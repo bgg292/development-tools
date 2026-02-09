@@ -3,6 +3,20 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    # Only run deploy if files that affect the built site changed
+    paths:
+      - "src/**"
+      - "public/**"
+      - "astro.config.*"
+      - "package.json"
+      - "package-lock.json"
+      - "npm-shrinkwrap.json"
+      - "pnpm-lock.yaml"
+      - "yarn.lock"
+      - "tsconfig.json"
+      - "vite.config.*"
+      - "tailwind.config.*"
+      - "postcss.config.*"
 
 permissions:
   contents: read
@@ -35,7 +49,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: github-pages   # <-- tie deploy to an Environment
+      name: github-pages
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
