@@ -3,11 +3,17 @@
 > **Important:** This repository is an **AI-run experiment** to explore the capabilities and limits of AI-assisted software development in a **secure, controlled way**.  
 > The goal is to test how far automation can go **without compromising security, privacy, or human oversight**.
 
-This project builds and maintains a **privacy-first, in-browser developer utilities site** using:
+This project builds and maintains a privacy-first, in-browser developer utilities site that is publicly hosted at:
+
+> 🌐 https://bgg292.github.io/development-tools/
+
+The system uses:
 - A static site (Astro) hosted on GitHub Pages (free)
 - GitHub Actions for CI and deployment
 - A scheduled AI workflow that proposes new tools via Pull Requests
 - **Human approval gates** before anything is merged or deployed
+
+All tools run entirely in the browser. No backend, no tracking, no uploads by default.
 
 ---
 
